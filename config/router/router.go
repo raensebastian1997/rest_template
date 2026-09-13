@@ -8,6 +8,8 @@ import (
 
 func InitializeRouter() error {
 	user := http.NewUserController()
+	product := http.NewProductController()
+
 	router := gin.Default()
 	// var data = interfaces{"user/list": user.Index, "user/get", "user/post"}
 	// routes := map[string]gin.Context{
@@ -15,11 +17,16 @@ func InitializeRouter() error {
 	// 	"GET /user/get":   user.Get,
 	// 	"POST /user/post": user.Post,
 	// }
-	v1 := router.Group("/api/v1")
-	v1.GET("/", user.Index)
-	v1.GET("/show/:id", user.Index)
-	v1.PUT("/", user.Index)
-	v1.DELETE("/", user.Index)
+	userRoutes := router.Group("/api/v1/user")
+	productRoutes := router.Group("/api/v1/product")
+
+	userRoutes.GET("/", user.Index)
+	userRoutes.GET("/show/:id", user.Index)
+	userRoutes.PUT("/", user.Index)
+	userRoutes.DELETE("/", user.Index)
+
+	productRoutes.GET("/", product.Index)
+	productRoutes.POST("/create", product.Create)
 
 	router.Run(":9090")
 	return nil

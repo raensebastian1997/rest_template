@@ -16,10 +16,23 @@ func ConnectDb() (*gorm.DB, error) {
 			fmt.Errorf("failed to connect to database: %w", err)
 	}
 
-	if err := cnn.AutoMigrate(domain.User{}); err != nil {
+	if err := cnn.AutoMigrate(&domain.User{}, &domain.Product{}); err != nil {
 		return nil,
 			fmt.Errorf("failed to migrate database: %w", err)
 	}
+
+	// for i := 1; i < 100000; i++ {
+	// 	// domain.User{
+
+	// 	// }
+	// 	newUser := domain.User{Name: "Alice", Email: "riaan@gmaola" + string(i), Createdat: time.Now(), Updatedat: time.Now().Unix(), Createdby: int64(i)}
+	// 	result := cnn.Create(&newUser) // Pass a pointer to backfill the generated ID
+	// 	// 4. Handle errors and metadata
+	// 	if result.Error != nil {
+	// 		panic(result.Error)
+	// 	}
+
+	// }
 
 	return cnn, nil
 }
