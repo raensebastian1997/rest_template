@@ -1,54 +1,94 @@
 package http
 
 import (
-	"restapirian/config"
+	stdhttp "net/http"
+
 	"restapirian/internal/domain"
+	"restapirian/internal/service"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
-type UserController struct {
-	db *gorm.DB
+type UserController struct{ service service.UserService }
+
+func NewUserController(userService service.UserService) *UserController {
+	return &UserController{service: userService}
 }
 
-func NewUserController() *UserController {
-	db, _ := config.ConnectDb()
-	return NewUserControllerWithDB(db)
-}
-
-func NewUserControllerWithDB(db *gorm.DB) *UserController {
-	return &UserController{
-		db: db,
-	}
-}
-
-func (ctrl *UserController) Index(ctx *gin.Context) {
-	if ctrl.db == nil {
-		ctx.JSON(500, gin.H{"error": "database unavailable"})
+func (ctrl *UserController) Index(c *gin.Context) {
+	if ctrl.service == nil {
+		c.JSON(stdhttp.StatusInternalServerError, gin.H{"error": "database unavailable"})
 		return
 	}
-
-	var data []domain.User
-
-	err := ctrl.db.Find(&data).Error
+	query, err := parseListQuery(c)
 	if err != nil {
-		ctx.JSON(500, gin.H{"error": "failed to fetch users"})
+		writeError(c, err)
 		return
 	}
-
-	ctx.JSON(200, gin.H{"data": data})
-
+	page, err := ctrl.service.List(c.Request.Context(), query)
+	if err != nil {
+		writeError(c, err)
+		return
+	}
+	c.JSON(stdhttp.StatusOK, page)
 }
 
-func (ctrl *UserController) Update(ctx *gin.Context) {
-
+func (ctrl *UserController) Show(c *gin.Context) {
+	id, err := parseInt64ID(c)
+	if err != nil {
+		writeError(c, err)
+		return
+	}
+	user, err := ctrl.service.Get(c.Request.Context(), id)
+	if err != nil {
+		writeError(c, err)
+		return
+	}
+	c.JSON(stdhttp.StatusOK, gin.H{"data": user})
 }
 
-func (ctrl *UserController) Create(ctx *gin.Context) {
-
+func (ctrl *UserController) Create(c *gin.Context) {
+	var input service.CreateUserInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		writeError(c, domain.ErrInvalidInput)
+		return
+	}
+	user, err := ctrl.service.Create(c.Request.Context(), input, currentUserID(c))
+	if err != nil {
+		writeError(c, err)
+		return
+	}
+	c.JSON(stdhttp.StatusCreated, gin.H{"data": user})
 }
 
-func (ctrl *UserController) Delete(ctx *gin.Context) {
+func (ctrl *UserController) Update(c *gin.Context) {
+	id, err := parseInt64ID(c)
+	if err != nil {
+		writeError(c, err)
+		return
+	}
+	var input service.UpdateUserInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		writeError(c, domain.ErrInvalidInput)
+		return
+	}
+	user, err := ctrl.service.Update(c.Request.Context(), id, input, currentUserID(c))
+	if err != nil {
+		writeError(c, err)
+		return
+	}
+	c.JSON(stdhttp.StatusOK, gin.H{"data": user})
+}
 
+func (ctrl *UserController) Delete(c *gin.Context) {
+	id, err := parseInt64ID(c)
+	if err != nil {
+		writeError(c, err)
+		return
+	}
+	if err := ctrl.service.Delete(c.Request.Context(), id, currentUserID(c)); err != nil {
+		writeError(c, err)
+		return
+	}
+	c.Status(stdhttp.StatusNoContent)
 }

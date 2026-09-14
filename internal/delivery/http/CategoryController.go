@@ -9,17 +9,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type ProductController struct{ service service.ProductService }
+type CategoryController struct{ service service.CategoryService }
 
-func NewProductController(productService service.ProductService) *ProductController {
-	return &ProductController{service: productService}
+func NewCategoryController(categoryService service.CategoryService) *CategoryController {
+	return &CategoryController{service: categoryService}
 }
 
-func (ctrl *ProductController) Index(c *gin.Context) {
-	if ctrl.service == nil {
-		c.JSON(stdhttp.StatusInternalServerError, gin.H{"error": "database unavailable"})
-		return
-	}
+func (ctrl *CategoryController) Index(c *gin.Context) {
 	query, err := parseListQuery(c)
 	if err != nil {
 		writeError(c, err)
@@ -33,54 +29,54 @@ func (ctrl *ProductController) Index(c *gin.Context) {
 	c.JSON(stdhttp.StatusOK, page)
 }
 
-func (ctrl *ProductController) Show(c *gin.Context) {
+func (ctrl *CategoryController) Show(c *gin.Context) {
 	id, err := parseInt32ID(c)
 	if err != nil {
 		writeError(c, err)
 		return
 	}
-	product, err := ctrl.service.Get(c.Request.Context(), id)
+	category, err := ctrl.service.Get(c.Request.Context(), id)
 	if err != nil {
 		writeError(c, err)
 		return
 	}
-	c.JSON(stdhttp.StatusOK, gin.H{"data": product})
+	c.JSON(stdhttp.StatusOK, gin.H{"data": category})
 }
 
-func (ctrl *ProductController) Create(c *gin.Context) {
-	var input service.ProductInput
+func (ctrl *CategoryController) Create(c *gin.Context) {
+	var input service.CategoryInput
 	if err := c.ShouldBindJSON(&input); err != nil {
 		writeError(c, domain.ErrInvalidInput)
 		return
 	}
-	product, err := ctrl.service.Create(c.Request.Context(), input, currentUserID(c))
+	category, err := ctrl.service.Create(c.Request.Context(), input)
 	if err != nil {
 		writeError(c, err)
 		return
 	}
-	c.JSON(stdhttp.StatusCreated, gin.H{"data": product})
+	c.JSON(stdhttp.StatusCreated, gin.H{"data": category})
 }
 
-func (ctrl *ProductController) Update(c *gin.Context) {
+func (ctrl *CategoryController) Update(c *gin.Context) {
 	id, err := parseInt32ID(c)
 	if err != nil {
 		writeError(c, err)
 		return
 	}
-	var input service.ProductInput
+	var input service.CategoryInput
 	if err := c.ShouldBindJSON(&input); err != nil {
 		writeError(c, domain.ErrInvalidInput)
 		return
 	}
-	product, err := ctrl.service.Update(c.Request.Context(), id, input, currentUserID(c))
+	category, err := ctrl.service.Update(c.Request.Context(), id, input)
 	if err != nil {
 		writeError(c, err)
 		return
 	}
-	c.JSON(stdhttp.StatusOK, gin.H{"data": product})
+	c.JSON(stdhttp.StatusOK, gin.H{"data": category})
 }
 
-func (ctrl *ProductController) Delete(c *gin.Context) {
+func (ctrl *CategoryController) Delete(c *gin.Context) {
 	id, err := parseInt32ID(c)
 	if err != nil {
 		writeError(c, err)

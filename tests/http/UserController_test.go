@@ -17,7 +17,7 @@ func TestUserControllerIndexDatabaseUnavailable(t *testing.T) {
 	ctx, _ := gin.CreateTestContext(recorder)
 	ctx.Request = request
 
-	controller := userhttp.NewUserControllerWithDB(nil)
+	controller := userhttp.NewUserController(nil)
 	controller.Index(ctx)
 
 	if recorder.Code != 500 {

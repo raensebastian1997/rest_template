@@ -1,16 +1,22 @@
 root = "."
-tmp_dir = "tmp"
+tmp_dir = ".air-tmp"
+env_files = [".env"]
 
 [build]
-cmd = "go build -o ./tmp/main.exe ./cmd/api"
-bin = "tmp/main.exe"
-full_bin = "tmp/main.exe"
-include_ext = ["go", "html", "tmpl", "tpl", "json", "yaml", "yml"]
-exclude_dir = ["tmp", "vendor", "testdata", ".git"]
-delay = 1000
+cmd = "go build -tags=nomsgpack -buildmode=exe -buildvcs=false -ldflags='-s -w -buildid=' -o ./.air-tmp/api-dev.exe ./cmd/api"
+entrypoint = ["./.air-tmp/api-dev.exe"]
+include_ext = ["go", "html", "tmpl", "tpl", "json", "yaml", "yml", "ps1"]
+exclude_dir = [".air-tmp", "tmp", "vendor", "testdata", ".git"]
+exclude_regex = ["_test.go"]
+exclude_unchanged = true
+delay = 100
 stop_on_error = true
-send_interrupt = true
-kill_delay = "500ms"
+send_interrupt = false
+kill_delay = "100ms"
+
+[build.windows]
+cmd = "powershell -NoProfile -ExecutionPolicy Bypass -File .\\scripts\\build-dev.ps1"
+entrypoint = ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", ".\\scripts\\run-dev.ps1"]
 
 [log]
 time = true
@@ -23,3 +29,7 @@ runner = "green"
 
 [misc]
 clean_on_exit = true
+
+[screen]
+clear_on_rebuild = false
+keep_scroll = true
